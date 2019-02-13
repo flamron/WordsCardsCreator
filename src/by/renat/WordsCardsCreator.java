@@ -19,23 +19,27 @@ public class WordsCardsCreator {
 
     private int height;
     private int width;
-    private int cardsInLine;
+    private int cardsInRow;
     private char linesFace[][];
     private char linesBack[][];
 
-    private static final char HORIZ = '-';
-    private static final char VERTIC = '|';
+    private static final char FACE_HORIZ_BORDER = '-';
+    private static final char FACE_VERTIC_BORDER = '|';
+    private static final char BACK_HORIZ_BORDER = '.';
+    private static final char BACK_VERTIC_BORDER = '.';
     private boolean leftBorderSpace = true;
     private boolean rightBorderSpace = true;
     private boolean topBorderSpace = true;
     private boolean bottomBorderSpace = true;
-    private char[] endLine;
+    private char[] endLineFace;
+    private char[] endLineBack;
+    private int cardsInColumn = 3;
 
-    public WordsCardsCreator(int height, int width, int cardsInLine, boolean leftBorderSpace, boolean rightBorderSpace, boolean topBorderSpace, boolean bottomBorderSpace) throws Exception {
+    public WordsCardsCreator(int height, int width, int cardsInRow, boolean leftBorderSpace, boolean rightBorderSpace, boolean topBorderSpace, boolean bottomBorderSpace) throws Exception {
         this.height = height;
         this.width = width;
-        this.cardsInLine = cardsInLine;
-        if (cardsInLine > 20)
+        this.cardsInRow = cardsInRow;
+        if (cardsInRow > 20)
             throw new Exception("Too much cards in line. May be error. Must be less or equal then 20");
 
         this.leftBorderSpace = leftBorderSpace;
@@ -51,25 +55,30 @@ public class WordsCardsCreator {
         int borderAddedSpaceWidth = 0;
         if (leftBorderSpace) borderAddedSpaceWidth++;
         if (rightBorderSpace) borderAddedSpaceWidth++;
-        int widthWithBorders = width*cardsInLine + 2 + (cardsInLine - 1) + borderAddedSpaceWidth*cardsInLine;
+        int widthWithBorders = width* cardsInRow + 2 + (cardsInRow - 1) + borderAddedSpaceWidth* cardsInRow;
 
         linesFace = new char[heightWithBorders][widthWithBorders];
         linesBack = new char[heightWithBorders][widthWithBorders];
 
-        endLine = new char[widthWithBorders];
-        Arrays.fill(endLine, HORIZ);
+        endLineFace = new char[widthWithBorders];
+        endLineBack = new char[widthWithBorders];
+        Arrays.fill(endLineFace, FACE_HORIZ_BORDER);
+        Arrays.fill(endLineBack, BACK_HORIZ_BORDER);
     }
 
     public void parse(String inputFileName, String outFaceFileName, String outBackFileName) throws Exception {
         try (BufferedReader br = new BufferedReader(new FileReader(inputFileName));
-             BufferedWriter bwFace = new BufferedWriter(new FileWriter(outFaceFileName));
-             BufferedWriter bwBack = new BufferedWriter(new FileWriter(outBackFileName))) {
+             BufferedWriter bw = new BufferedWriter(new FileWriter(outFaceFileName));
+             /*BufferedWriter bwBack = new BufferedWriter(new FileWriter(outBackFileName))*/) {
 
             Pattern pattern = Pattern.compile("([a-zA-Z -]+) ([^а-яА-ЯёЁ]+|=) ([а-яА-ЯёЁ,;().+ ]+)([a-zA-Z,.;:\\[\\]’ ()-]*)");
             String line = br.readLine();
             int counter = 1;
             int cardsLineCounter = 0;
 
+            TwoSideCard cards[][] = new TwoSideCard[cardsInColumn][cardsInRow];
+            int posI = 0;
+            int posJ = 0;
             while (line != null) {
                 if (line.length() == 0) {
                     System.out.println(counter + ": Пустая строка.");
@@ -94,14 +103,26 @@ public class WordsCardsCreator {
                             } catch (Exception e) {
                                 throw new Exception("Error while create card with line " + counter + ": " + e.getMessage());
                             }
-                            if (cardsLineCounter < cardsInLine) {
+                            if (posJ == cardsInRow) {
+                                posJ = 0;
+                                posI++;
+                            }
+                            if (posI == cardsInColumn) {
+                                writeCardsToFile(bw, cards);
+                                posI = 0;
+                                posJ = 0;
+                            }
+                            cards[posI][posJ++] = tcard;
+
+
+                            /*if (cardsLineCounter < cardsInRow) {
                                 addCardToLines(tcard, cardsLineCounter);
                             } else {
-                                writeLinesToFiles(bwFace, bwBack);
+                                writeLinesToFiles(bw, bwBack);
                                 cardsLineCounter = 0;
                                 addCardToLines(tcard, cardsLineCounter);
                             }
-                            cardsLineCounter++;
+                            cardsLineCounter++;*/
                         }
                     } else {
                         System.out.println(counter + ": Строка не парсится.");
@@ -110,11 +131,29 @@ public class WordsCardsCreator {
                 counter++;
                 line = br.readLine();
             }
-            bwFace.write(endLine);
-            bwFace.write(System.lineSeparator());
-            bwBack.write(endLine);
-            bwBack.write(System.lineSeparator());
+            /*bw.write(endLineFace);
+            bw.write(System.lineSeparator());*/
         }
+    }
+
+    private void writeCardsToFile(BufferedWriter bw, TwoSideCard cards[][]) throws IOException {
+        for (int i = 0; i < cardsInColumn; i++) {
+            for (int j = 0; j < cardsInRow; j++) {
+                fillLinesFromCard(linesFace, cards[i][j].face, j, FACE_VERTIC_BORDER, FACE_HORIZ_BORDER);
+            }
+            writeLinesToFile(linesFace, bw);
+        }
+        bw.write(endLineFace);
+        bw.write(System.lineSeparator());
+
+        for (int i = 0; i < cardsInColumn; i++) {
+            for (int j = 0; j < cardsInRow; j++) {
+                fillLinesFromCard(linesBack, cards[i][j].back, cardsInRow - 1 - j, BACK_VERTIC_BORDER, BACK_HORIZ_BORDER);
+            }
+            writeLinesToFile(linesBack, bw);
+        }
+        bw.write(endLineBack);
+        bw.write(System.lineSeparator());
     }
 
     private TwoSideCard buildCard(String engWord, String transcription, String translete, String example) throws Exception {
@@ -128,12 +167,13 @@ public class WordsCardsCreator {
         return new TwoSideCard(face, back);
     }
 
-    private void addCardToLines(TwoSideCard tcard, int cardPosition) {
-        /*int jPos = cardPosition*width;
-        int jNextPos = (cardPosition + 1)*width;*/
-        fillLinesFromCard(linesFace, tcard.face, cardPosition, VERTIC, HORIZ);
-        fillLinesFromCard(linesBack, tcard.back, cardsInLine - 1 - cardPosition, '.', '.');
+    /*private void addCardFaceToLines(TwoSideCard tcard, int cardPosition) {
+        fillLinesFromCard(linesFace, tcard.face, cardPosition, FACE_VERTIC_BORDER, FACE_HORIZ_BORDER);
     }
+
+    private void addCardBackToLines(TwoSideCard tcard, int cardPosition) {
+        fillLinesFromCard(linesBack, tcard.back, cardsInRow - 1 - cardPosition, '.', '.');
+    }*/
 
     private void fillLinesFromCard(char[][] lines, Card card, int cardPos, char vertic, char horiz) {
         int borderAddedSpaceWidth = 0;
@@ -175,14 +215,10 @@ public class WordsCardsCreator {
         }
     }
 
-    private void writeLinesToFiles(BufferedWriter bwFace, BufferedWriter bwBack) throws IOException {
-        for (char[] chars : linesFace) {
-            bwFace.write(chars);
-            bwFace.write(System.lineSeparator());
-        }
-        for (char[] chars : linesBack) {
-            bwBack.write(chars);
-            bwBack.write(System.lineSeparator());
+    private void writeLinesToFile(char[][] lines, BufferedWriter bw) throws IOException {
+        for (char[] chars : lines) {
+            bw.write(chars);
+            bw.write(System.lineSeparator());
         }
     }
 
