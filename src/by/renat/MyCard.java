@@ -2,8 +2,7 @@ package by.renat;
 
 import java.util.Arrays;
 
-public class MyCard implements Card {
-
+class MyCard implements Card {
     private class Position {
         int start;
         int end;
@@ -22,7 +21,8 @@ public class MyCard implements Card {
     private boolean usedLines[];
     private char lines[][];
 
-    public MyCard(int height, int width) {
+
+    MyCard(int height, int width) {
         this.height = height;
         this.width = width;
         usedLines = new boolean[height];
@@ -64,6 +64,7 @@ public class MyCard implements Card {
 
     @Override
     public void writeToCard(String text, ALIGN align) throws Exception {
+        if (text == null || text.length() == 0) return;
         Position p;
         switch (align) {
             case UP:
@@ -83,12 +84,12 @@ public class MyCard implements Card {
         char[] chars = text.toCharArray();
         int row = p.start;
         int col = 0;
-        for (int i = 0; i < chars.length; i++) {
+        for (char aChar : chars) {
             if (col == width) {
                 row++;
                 col = 0;
             }
-            lines[row][col++] = chars[i];
+            lines[row][col++] = aChar;
             if (!usedLines[row]) usedLines[row] = true;
         }
         if (row != p.end)
@@ -196,5 +197,10 @@ public class MyCard implements Card {
         } else {
             return length / width + 1;
         }
+    }
+
+    @Override
+    public char[][] getLines() {
+        return lines;
     }
 }

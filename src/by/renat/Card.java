@@ -5,5 +5,6 @@ public interface Card {
         UP, DOWN, CENTER
     }
     void writeToCard(String text, Card.ALIGN align) throws Exception;
-    public String toStringWithoutBorders();
+    String toStringWithoutBorders();
+    char[][] getLines();
 }
