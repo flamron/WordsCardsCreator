@@ -29,6 +29,7 @@ public class WordsCardsCreator {
     private boolean rightBorderSpace = true;
     private boolean topBorderSpace = true;
     private boolean bottomBorderSpace = true;
+    private char[] endLine;
 
     public WordsCardsCreator(int height, int width, int cardsInLine, boolean leftBorderSpace, boolean rightBorderSpace, boolean topBorderSpace, boolean bottomBorderSpace) throws Exception {
         this.height = height;
@@ -54,6 +55,9 @@ public class WordsCardsCreator {
 
         linesFace = new char[heightWithBorders][widthWithBorders];
         linesBack = new char[heightWithBorders][widthWithBorders];
+
+        endLine = new char[widthWithBorders];
+        Arrays.fill(endLine, HORIZ);
     }
 
     public void parse(String inputFileName, String outFaceFileName, String outBackFileName) throws Exception {
@@ -86,17 +90,18 @@ public class WordsCardsCreator {
                         } else {
                             TwoSideCard tcard = null;
                             try {
-                                tcard = buildCard(engWord, transcription, translate, example);
+                                tcard = buildCard(engWord.toLowerCase(), transcription, translate, example);
                             } catch (Exception e) {
                                 throw new Exception("Error while create card with line " + counter + ": " + e.getMessage());
                             }
                             if (cardsLineCounter < cardsInLine) {
                                 addCardToLines(tcard, cardsLineCounter);
-                                cardsLineCounter++;
                             } else {
                                 writeLinesToFiles(bwFace, bwBack);
                                 cardsLineCounter = 0;
+                                addCardToLines(tcard, cardsLineCounter);
                             }
+                            cardsLineCounter++;
                         }
                     } else {
                         System.out.println(counter + ": Строка не парсится.");
@@ -105,6 +110,10 @@ public class WordsCardsCreator {
                 counter++;
                 line = br.readLine();
             }
+            bwFace.write(endLine);
+            bwFace.write(System.lineSeparator());
+            bwBack.write(endLine);
+            bwBack.write(System.lineSeparator());
         }
     }
 
@@ -122,11 +131,11 @@ public class WordsCardsCreator {
     private void addCardToLines(TwoSideCard tcard, int cardPosition) {
         /*int jPos = cardPosition*width;
         int jNextPos = (cardPosition + 1)*width;*/
-        fillLinesFromCard(linesFace, tcard.face, cardPosition);
-        fillLinesFromCard(linesBack, tcard.back, cardPosition);
+        fillLinesFromCard(linesFace, tcard.face, cardPosition, VERTIC, HORIZ);
+        fillLinesFromCard(linesBack, tcard.back, cardsInLine - 1 - cardPosition, '.', '.');
     }
 
-    private void fillLinesFromCard(char[][] lines, Card card, int cardPos) {
+    private void fillLinesFromCard(char[][] lines, Card card, int cardPos, char vertic, char horiz) {
         int borderAddedSpaceWidth = 0;
         if (leftBorderSpace) borderAddedSpaceWidth++;
         if (rightBorderSpace) borderAddedSpaceWidth++;
@@ -136,16 +145,17 @@ public class WordsCardsCreator {
 
         int topBorderHeight = 1;
         char[][] clines = card.getLines();
-        Arrays.fill(lines[0], startColumn, endColumn + 1, HORIZ);
+
+        Arrays.fill(lines[0], startColumn, endColumn + 1, horiz);
         if (topBorderSpace) {
             Arrays.fill(lines[1], startColumn + 1, endColumn, ' ');
-            lines[1][startColumn] = VERTIC;
-            lines[1][endColumn] = VERTIC;
+            lines[1][startColumn] = vertic;
+            lines[1][endColumn] = vertic;
             topBorderHeight = 2;
         }
 
         for (int i = 0; i < clines.length; i++) {
-            lines[topBorderHeight + i][startColumn] = VERTIC;
+            lines[topBorderHeight + i][startColumn] = vertic;
             int leftBorderWidth = 1;
             if (leftBorderSpace) {
                 lines[topBorderHeight + i][startColumn + 1] = ' ';
@@ -155,13 +165,13 @@ public class WordsCardsCreator {
             if (rightBorderSpace) {
                 lines[topBorderHeight + i][endColumn - 1] = ' ';
             }
-            lines[topBorderHeight + i][endColumn] = VERTIC;
+            lines[topBorderHeight + i][endColumn] = vertic;
         }
 
         if (bottomBorderSpace) {
             Arrays.fill(lines[lines.length - 1], startColumn + 1, endColumn, ' ');
-            lines[lines.length - 1][startColumn] = VERTIC;
-            lines[lines.length - 1][endColumn] = VERTIC;
+            lines[lines.length - 1][startColumn] = vertic;
+            lines[lines.length - 1][endColumn] = vertic;
         }
     }
 

@@ -7,7 +7,7 @@ public class Runner {
     public static void main(String[] args) {
         WordsCardsCreator wcc = null;
         try {
-            wcc = new WordsCardsCreator(15, 30, 4, false, false, false, false);
+            wcc = new WordsCardsCreator(13, 27, 2, true, true, true, false);
         } catch (Exception e) {
             System.out.println("Error while created WordCardsCreator, message: " + e.getMessage());
             return;
