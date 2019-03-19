@@ -12,8 +12,17 @@ public class Runner {
             System.out.println("Error while created WordCardsCreator, message: " + e.getMessage());
             return;
         }
+        String input, output;
+        if (args.length > 0)
+            input = args[0];
+        else
+            input = "D:/Dropbox/Java/words.txt";
+        if (args.length > 1)
+            output = args[1];
+        else
+            output = "D:/Dropbox/Java/face.txt";
         try {
-            wcc.parse("D:/Dropbox/Java/words.txt", "D:/Dropbox/Java/face.txt", "D:/Dropbox/Java/back.txt");
+            wcc.parse(input, output);
         } catch (IOException e) {
             System.out.println("Ошибка чтения файла: " + e.getMessage());
         } catch (Exception e) {

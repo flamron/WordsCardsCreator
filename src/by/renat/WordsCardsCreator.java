@@ -1,6 +1,7 @@
 package by.renat;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -66,12 +67,12 @@ public class WordsCardsCreator {
         Arrays.fill(endLineBack, BACK_HORIZ_BORDER);
     }
 
-    public void parse(String inputFileName, String outFaceFileName, String outBackFileName) throws Exception {
-        try (BufferedReader br = new BufferedReader(new FileReader(inputFileName));
-             BufferedWriter bw = new BufferedWriter(new FileWriter(outFaceFileName));
+    public void parse(String inputFileName, String outFaceFileName) throws Exception {
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(inputFileName), StandardCharsets.UTF_8));
+             BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outFaceFileName), StandardCharsets.UTF_8));
              /*BufferedWriter bwBack = new BufferedWriter(new FileWriter(outBackFileName))*/) {
 
-            Pattern pattern = Pattern.compile("([a-zA-Z -]+) ([^а-яА-ЯёЁ]+|=) ([а-яА-ЯёЁ,;().+ ]+)([a-zA-Z,.;:\\[\\]’ ()-]*)");
+            Pattern pattern = Pattern.compile("([a-zA-Z'’ -]+) ([^а-яА-ЯёЁ]+|=) ([а-яА-ЯёЁ,;().+'\" -]+)([a-zA-Z0-9,.;:\\[\\]’'\"!? ()+-]*)");
             String line = br.readLine();
             int counter = 1;
             int cardsLineCounter = 0;
@@ -103,6 +104,7 @@ public class WordsCardsCreator {
                             } catch (Exception e) {
                                 throw new Exception("Error while create card with line " + counter + ": " + e.getMessage());
                             }
+                            cards[posI][posJ++] = tcard;
                             if (posJ == cardsInRow) {
                                 posJ = 0;
                                 posI++;
@@ -112,8 +114,6 @@ public class WordsCardsCreator {
                                 posI = 0;
                                 posJ = 0;
                             }
-                            cards[posI][posJ++] = tcard;
-
 
                             /*if (cardsLineCounter < cardsInRow) {
                                 addCardToLines(tcard, cardsLineCounter);
@@ -125,7 +125,7 @@ public class WordsCardsCreator {
                             cardsLineCounter++;*/
                         }
                     } else {
-                        System.out.println(counter + ": Строка не парсится.");
+                        System.out.println(counter + ": Строка не парсится: " + line);
                     }
                 }
                 counter++;
